@@ -72,7 +72,18 @@ fun PupilListScreen(
                                     }
                                 }
                             }
-
+                            Row (
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                Text(
+                                    text = "Page: ${it.data.pageNumber}",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onBackground
+                                )
+                            }
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
