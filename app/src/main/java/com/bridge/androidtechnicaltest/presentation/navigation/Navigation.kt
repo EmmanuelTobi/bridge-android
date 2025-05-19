@@ -12,10 +12,7 @@ import com.bridge.androidtechnicaltest.presentation.screens.CreatePupilScreen
 import com.bridge.androidtechnicaltest.presentation.screens.EditPupilScreen
 import com.bridge.androidtechnicaltest.presentation.screens.PupilDetailScreen
 import com.bridge.androidtechnicaltest.presentation.screens.PupilListScreen
-import com.bridge.androidtechnicaltest.presentation.viewmodel.PupilViewModel
-import org.koin.androidx.compose.koinViewModel
 
-@SuppressLint("StateFlowValueCalledInComposition")
 @Composable
 fun Navigation(
     navController: NavHostController
@@ -58,11 +55,8 @@ fun Navigation(
             route = Screen.EditStudent.route + "/{studentId}",
             arguments = listOf(navArgument("studentId") { type = NavType.IntType })
         ) { backStackEntry ->
-            val viewModel = koinViewModel<PupilViewModel>()
-            println(viewModel.editPupil.value)
             EditPupilScreen(
                 studentId = backStackEntry.arguments?.getInt("studentId") ?: 0,
-                pupil = viewModel.editPupil.value,
                 onNavigateBack = { navController.popBackStack() }
             )
         }

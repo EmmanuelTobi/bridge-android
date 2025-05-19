@@ -18,7 +18,6 @@ import org.koin.androidx.compose.koinViewModel
 fun EditPupilScreen(
     studentId: Int,
     onNavigateBack: () -> Unit,
-    pupil: Pupil? = null,
     viewModel: PupilViewModel = koinViewModel()
 ) {
 

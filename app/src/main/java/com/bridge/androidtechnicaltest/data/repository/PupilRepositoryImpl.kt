@@ -2,24 +2,30 @@ package com.bridge.androidtechnicaltest.data.repository
 
 import android.util.Log
 import com.bridge.androidtechnicaltest.data.api.PupilApiService
+import com.bridge.androidtechnicaltest.data.local.PupilDao
+import com.bridge.androidtechnicaltest.data.local.PupilEntity
 import com.bridge.androidtechnicaltest.data.model.Pupil
 import com.bridge.androidtechnicaltest.data.model.Pupils
 import com.bridge.androidtechnicaltest.domain.PupilRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.retry
 import retrofit2.HttpException
 import java.io.IOException
 class PupilRepositoryImpl(
-    private val apiService: PupilApiService
+    private val apiService: PupilApiService,
+    private val pupilDao: PupilDao
 ) : PupilRepository {
     private val TAG = "StudentRepositoryImpl"
 
     override suspend fun getStudents(page: Int): Flow<Pupils> {
         return flow {
-            val res = apiService.getStudents(page)
+
+            val res = apiService.getPupils(page)
             emit(res)
+
         }.retry(3) { cause ->
 
             Log.d(TAG, "getStudents Retrying: ${cause.message}")
@@ -28,6 +34,21 @@ class PupilRepositoryImpl(
                     (cause is HttpException && cause.code() != 200)
 
         }.catch { throwable ->
+
+            Log.d(TAG, "getStudents from local after final Error: ${throwable.message}")
+            try {
+
+                val localPupils = pupilDao.getAllPupils().first()
+                emit(Pupils(
+                    itemCount = localPupils.size,
+                    items = localPupils.map { it.toPupil() },
+                    pageNumber = page,
+                    totalPages = 1
+                ))
+
+            } catch (e: Exception) {
+                throw e
+            }
 
             Log.d(TAG, "getStudents Error: ${throwable.message}")
             when (throwable) {
@@ -46,7 +67,7 @@ class PupilRepositoryImpl(
     override suspend fun getStudentById(id: Int): Flow<Pupil> {
         return flow {
 
-            val res = apiService.getStudentById(id)
+            val res = apiService.getPupilById(id)
             emit(res)
 
         }.retry(2) { cause ->
@@ -56,8 +77,18 @@ class PupilRepositoryImpl(
                     (cause is HttpException && cause.code() != 200)
         }.catch {
 
-            Log.d(TAG, "getStudentById Error: ${it.message}")
+            try {
 
+                val localPupil = pupilDao.getPupilById(id)?.toPupil()
+                if (localPupil != null) {
+                    emit(localPupil)
+                }
+
+            } catch (e: Exception) {
+                throw e
+            }
+
+            Log.d(TAG, "getStudentById Error: ${it.message}")
             when (it) {
                 is HttpException -> {
 
@@ -73,7 +104,7 @@ class PupilRepositoryImpl(
     override suspend fun createStudent(student: Pupil): Flow<Pupil> {
         return flow {
 
-            val res = apiService.createStudent(student)
+            val res = apiService.createPupil(student)
             emit(res)
 
         }.retry(4) { cause ->
@@ -83,6 +114,10 @@ class PupilRepositoryImpl(
                     (cause is HttpException && cause.code() != 201)
 
         }.catch {
+
+            Log.d(TAG, "createStudent in local after final Error: ${it.message}")
+            pupilDao.insertPupil(PupilEntity.fromPupil(student))
+            emit(student)
 
             Log.d(TAG, "createStudent Error: ${it.message}")
             when(it) {
@@ -99,8 +134,16 @@ class PupilRepositoryImpl(
 
     override suspend fun deleteStudentById(id: Int): Flow<Pupil> {
         return flow {
-            val res = apiService.deleteStudentById(id)
-            emit(res)
+            try {
+                val res = apiService.deletePupil(id)
+                pupilDao.getPupilById(id)?.let { pupilDao.deletePupil(it) }
+                emit(res)
+            } catch (e: Exception) {
+                pupilDao.getPupilById(id)?.let {
+                    pupilDao.deletePupil(it)
+                    emit(it.toPupil())
+                } ?: throw e
+            }
         }.retry {
             Log.d(TAG, "deleteStudentById Retrying: ${it.message}")
             it is IOException ||
@@ -112,8 +155,18 @@ class PupilRepositoryImpl(
 
     override suspend fun updateStudentById(id: Int, pupil: Pupil): Flow<Pupil> {
         return flow {
-            val res = apiService.getStudentById(id, pupil)
-            emit(res)
+            try {
+                val res = apiService.updatePupil(id, pupil)
+                pupilDao.getPupilById(id)?.let {
+                    pupilDao.updatePupil(PupilEntity.fromPupil(pupil))
+                }
+                emit(res)
+            } catch (e: Exception) {
+                pupilDao.getPupilById(id)?.let {
+                    pupilDao.updatePupil(PupilEntity.fromPupil(pupil))
+                    emit(pupil)
+                } ?: throw e
+            }
         }
     }
 

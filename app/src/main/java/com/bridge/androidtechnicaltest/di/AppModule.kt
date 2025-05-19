@@ -12,6 +12,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 val appModule = module {
+    includes(databaseModule)
     single {
         val requestInterceptor = Interceptor { intercept ->
             val original = intercept.request()
@@ -38,7 +39,7 @@ val appModule = module {
     }
 
     single<PupilRepository> {
-        PupilRepositoryImpl(get())
+        PupilRepositoryImpl(get(), get())
     }
 
     viewModel {
