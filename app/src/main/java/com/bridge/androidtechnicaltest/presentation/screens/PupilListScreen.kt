@@ -130,7 +130,7 @@ fun PupilListScreen(
                                 color = MaterialTheme.colorScheme.error
                             )
                             Button(
-                                onClick = { viewModel.loadStudents() }
+                                onClick = { viewModel.loadPupils(reload = true) }
                             ) {
                                 Text("Retry")
                             }

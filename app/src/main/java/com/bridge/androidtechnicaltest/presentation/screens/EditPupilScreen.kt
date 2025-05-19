@@ -92,7 +92,7 @@ fun EditPupilScreen(
                                 longitude = lng.toDoubleOrNull() ?: 0.0,
                                 latitude = lat.toDoubleOrNull() ?: 0.0
                             )
-                            viewModel.updateStudent(studentId, updatedStudent)
+                            viewModel.updatePupil(studentId, updatedStudent)
                         }
                         onNavigateBack()
                     },

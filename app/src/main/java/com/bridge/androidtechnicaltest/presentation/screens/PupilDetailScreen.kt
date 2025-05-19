@@ -26,7 +26,7 @@ fun PupilDetailScreen(
 ) {
 
     LaunchedEffect(Unit) {
-        viewModel.getStudentDetails(studentId)
+        viewModel.getPupilDetails(studentId)
     }
 
     val student by viewModel.selectedPupil.collectAsState()
@@ -65,7 +65,7 @@ fun PupilDetailScreen(
                                 color = MaterialTheme.colorScheme.error
                             )
                             Button(
-                                onClick = { viewModel.getStudentDetails(studentId) }
+                                onClick = { viewModel.getPupilDetails(studentId) }
                             ) {
                                 Text("Retry")
                             }

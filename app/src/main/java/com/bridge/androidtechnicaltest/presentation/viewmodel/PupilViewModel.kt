@@ -18,7 +18,7 @@ class PupilViewModel(private val repository: PupilRepository) : ViewModel() {
     private var isLastPage = false
 
     init {
-        loadStudents()
+        loadPupils()
     }
 
     private val _pupils = MutableStateFlow<ResultHandler<Pupils>>(ResultHandler.Loading)
@@ -30,23 +30,28 @@ class PupilViewModel(private val repository: PupilRepository) : ViewModel() {
     private val _editPupil = MutableStateFlow<Pupil?>(null)
     val editPupil: StateFlow<Pupil?> = _editPupil.asStateFlow()
 
-    private val _createStudent = MutableStateFlow<ResultHandler<Pupil>>(ResultHandler.Loading)
-    val createStudent: StateFlow<ResultHandler<Pupil>> = _createStudent.asStateFlow()
+    private val _createPupil = MutableStateFlow<ResultHandler<Pupil>>(ResultHandler.Loading)
+    val createPupil: StateFlow<ResultHandler<Pupil>> = _createPupil.asStateFlow()
 
-    private val _deleteStudent = MutableStateFlow<ResultHandler<Pupil>>(ResultHandler.Loading)
-    val deleteStudent: StateFlow<ResultHandler<Pupil>> = _deleteStudent.asStateFlow()
+    private val _deletePupil = MutableStateFlow<ResultHandler<Pupil>>(ResultHandler.Loading)
+    val deletePupil: StateFlow<ResultHandler<Pupil>> = _deletePupil.asStateFlow()
 
-    fun loadStudents(page: Int = currentPage) {
+    fun loadPupils(page: Int = currentPage, reload: Boolean = false) {
+
+        if(reload) {
+            _pupils.value = ResultHandler.Loading
+        }
+
         viewModelScope.launch {
             try {
-                val res = repository.getStudents(page)
+                val res = repository.getPupils(page)
                 res.collectLatest {
                     if(it.items.isNotEmpty()) {
                         _pupils.value = ResultHandler.Success(it)
                         currentPage = page
                         isLastPage = it.pageNumber >= it.totalPages
                     } else {
-                        _pupils.value = ResultHandler.Error(Exception("No students found"))
+                        _pupils.value = ResultHandler.Error(Exception("No Pupils found"))
                         isLastPage = true
                     }
                 }
@@ -61,21 +66,21 @@ class PupilViewModel(private val repository: PupilRepository) : ViewModel() {
         println(!isLastPage)
 
         if (!isLastPage) {
-            loadStudents(currentPage + 1)
+            loadPupils(currentPage + 1)
         }
     }
 
     fun loadPreviousPage() {
         _pupils.value = ResultHandler.Loading
         if (currentPage > 1) {
-            loadStudents(currentPage - 1)
+            loadPupils(currentPage - 1)
         }
     }
 
-    fun getStudentDetails(id: Int) {
+    fun getPupilDetails(id: Int) {
         viewModelScope.launch {
             try {
-                val res = repository.getStudentById(id)
+                val res = repository.getPupilById(id)
                 res.collectLatest {
                     _selectedPupil.value = ResultHandler.Success(it)
                 }
@@ -85,11 +90,11 @@ class PupilViewModel(private val repository: PupilRepository) : ViewModel() {
         }
     }
 
-    fun createStudent(pupil: Pupil) {
+    fun createPupil(pupil: Pupil) {
         viewModelScope.launch {
             try {
-                repository.createStudent(pupil)
-                loadStudents()
+                repository.createPupil(pupil)
+                loadPupils()
             } catch (e: Exception) {
                 
             }
@@ -101,12 +106,12 @@ class PupilViewModel(private val repository: PupilRepository) : ViewModel() {
         println(editPupil.value!!.pupilId!!.toString())
     }
 
-    fun updateStudent(id: Int, pupil: Pupil) {
+    fun updatePupil(id: Int, pupil: Pupil) {
         viewModelScope.launch {
             try {
-                repository.updateStudentById(id, pupil)
-                loadStudents()
-                getStudentDetails(pupil.pupilId!!)
+                repository.updatePupilById(id, pupil)
+                loadPupils()
+                getPupilDetails(pupil.pupilId!!)
             } catch (e: Exception) {
                 _selectedPupil.value = ResultHandler.Error(e)
             }

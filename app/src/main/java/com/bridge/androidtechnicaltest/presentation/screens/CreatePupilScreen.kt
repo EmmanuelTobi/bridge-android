@@ -91,7 +91,7 @@ fun CreatePupilScreen(
                         longitude = 0.0,
                         country = "",
                     )
-                    viewModel.createStudent(pupil)
+                    viewModel.createPupil(pupil)
                     onNavigateBack()
                 },
                 modifier = Modifier.fillMaxWidth().height(56.dp),

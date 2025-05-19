@@ -18,9 +18,9 @@ class PupilRepositoryImpl(
     private val apiService: PupilApiService,
     private val pupilDao: PupilDao
 ) : PupilRepository {
-    private val TAG = "StudentRepositoryImpl"
+    private val TAG = "PupilRepositoryImpl"
 
-    override suspend fun getStudents(page: Int): Flow<Pupils> {
+    override suspend fun getPupils(page: Int): Flow<Pupils> {
         return flow {
 
             val res = apiService.getPupils(page)
@@ -28,14 +28,14 @@ class PupilRepositoryImpl(
 
         }.retry(3) { cause ->
 
-            Log.d(TAG, "getStudents Retrying: ${cause.message}")
+            Log.d(TAG, "getPupils Retrying: ${cause.message}")
             cause is IOException ||
                     (cause is HttpException && cause.code() != 201) ||
                     (cause is HttpException && cause.code() != 200)
 
         }.catch { throwable ->
 
-            Log.d(TAG, "getStudents from local after final Error: ${throwable.message}")
+            Log.d(TAG, "getPupils from local after final Error: ${throwable.message}")
             try {
 
                 val localPupils = pupilDao.getAllPupils().first()
@@ -50,7 +50,7 @@ class PupilRepositoryImpl(
                 throw e
             }
 
-            Log.d(TAG, "getStudents Error: ${throwable.message}")
+            Log.d(TAG, "getPupils Error: ${throwable.message}")
             when (throwable) {
                 is HttpException -> {
                     if (throwable.code() == 404) {
@@ -64,14 +64,14 @@ class PupilRepositoryImpl(
         }
     }
 
-    override suspend fun getStudentById(id: Int): Flow<Pupil> {
+    override suspend fun getPupilById(id: Int): Flow<Pupil> {
         return flow {
 
             val res = apiService.getPupilById(id)
             emit(res)
 
         }.retry(2) { cause ->
-            Log.d(TAG, "getStudentById Retrying: ${cause.message}")
+            Log.d(TAG, "getPupilById Retrying: ${cause.message}")
             cause is IOException ||
                     (cause is HttpException && cause.code() != 201) ||
                     (cause is HttpException && cause.code() != 200)
@@ -88,7 +88,7 @@ class PupilRepositoryImpl(
                 throw e
             }
 
-            Log.d(TAG, "getStudentById Error: ${it.message}")
+            Log.d(TAG, "getPupilById Error: ${it.message}")
             when (it) {
                 is HttpException -> {
 
@@ -101,25 +101,25 @@ class PupilRepositoryImpl(
         }
     }
 
-    override suspend fun createStudent(student: Pupil): Flow<Pupil> {
+    override suspend fun createPupil(Pupil: Pupil): Flow<Pupil> {
         return flow {
 
-            val res = apiService.createPupil(student)
+            val res = apiService.createPupil(Pupil)
             emit(res)
 
         }.retry(4) { cause ->
 
-            Log.d(TAG, "createStudent Retrying: ${cause.message}")
+            Log.d(TAG, "createPupil Retrying: ${cause.message}")
             cause is IOException ||
                     (cause is HttpException && cause.code() != 201)
 
         }.catch {
 
-            Log.d(TAG, "createStudent in local after final Error: ${it.message}")
-            pupilDao.insertPupil(PupilEntity.fromPupil(student))
-            emit(student)
+            Log.d(TAG, "createPupil in local after final Error: ${it.message}")
+            pupilDao.insertPupil(PupilEntity.fromPupil(Pupil))
+            emit(Pupil)
 
-            Log.d(TAG, "createStudent Error: ${it.message}")
+            Log.d(TAG, "createPupil Error: ${it.message}")
             when(it) {
                 is HttpException -> {
 
@@ -132,7 +132,7 @@ class PupilRepositoryImpl(
         }
     }
 
-    override suspend fun deleteStudentById(id: Int): Flow<Pupil> {
+    override suspend fun deletePupilById(id: Int): Flow<Pupil> {
         return flow {
             try {
                 val res = apiService.deletePupil(id)
@@ -145,15 +145,15 @@ class PupilRepositoryImpl(
                 } ?: throw e
             }
         }.retry {
-            Log.d(TAG, "deleteStudentById Retrying: ${it.message}")
+            Log.d(TAG, "deletePupilById Retrying: ${it.message}")
             it is IOException ||
                     (it is HttpException && it.code() != 201)
         }.catch {
-            Log.d(TAG, "deleteStudentById Error: ${it.message}")
+            Log.d(TAG, "deletePupilById Error: ${it.message}")
         }
     }
 
-    override suspend fun updateStudentById(id: Int, pupil: Pupil): Flow<Pupil> {
+    override suspend fun updatePupilById(id: Int, pupil: Pupil): Flow<Pupil> {
         return flow {
             try {
                 val res = apiService.updatePupil(id, pupil)
