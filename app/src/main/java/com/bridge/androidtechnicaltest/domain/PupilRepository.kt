@@ -8,6 +8,6 @@ interface PupilRepository {
     suspend fun getPupils(page: Int): Flow<Pupils>
     suspend fun getPupilById(id: Int): Flow<Pupil>
     suspend fun createPupil(pupil: Pupil): Flow<Pupil>
-    suspend fun deletePupilById(id: Int): Flow<Pupil>
+    suspend fun deletePupilById(id: Int): Flow<Any>
     suspend fun updatePupilById(id: Int, pupil: Pupil): Flow<Pupil>
 }

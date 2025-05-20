@@ -143,19 +143,14 @@ class PupilRepositoryImpl(
         }
     }
 
-    override suspend fun deletePupilById(id: Int): Flow<Pupil> {
+    override suspend fun deletePupilById(id: Int): Flow<Any> {
         return flow {
-            try {
-                val res = apiService.deletePupil(id)
-                pupilDao.getPupilById(id)?.let { pupilDao.deletePupil(it) }
-                emit(res)
-            } catch (e: Exception) {
-                pupilDao.getPupilById(id)?.let {
-                    pupilDao.deletePupil(it)
-                    emit(it.toPupil())
-                } ?: throw e
-            }
-        }.retry {
+
+            val res = apiService.deletePupil(id)
+            pupilDao.getPupilById(id)?.let { pupilDao.deletePupil(it) }
+            emit(res)
+
+        }.retry (3) {
             Log.d(TAG, "deletePupilById Retrying: ${it.message}")
             it is IOException ||
                     (it is HttpException && it.code() != 201)

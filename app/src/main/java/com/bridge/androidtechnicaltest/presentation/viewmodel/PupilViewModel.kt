@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.lang.reflect.Type
 
 class PupilViewModel(private val repository: PupilRepository) : ViewModel() {
 
@@ -36,8 +37,8 @@ class PupilViewModel(private val repository: PupilRepository) : ViewModel() {
     private val _updatePupil = MutableStateFlow<ResultHandler<Pupil>?>(null)
     val updatePupil: StateFlow<ResultHandler<Pupil>?> = _updatePupil.asStateFlow()
 
-    private val _deletePupil = MutableStateFlow<ResultHandler<Pupil>?>(null)
-    val deletePupil: StateFlow<ResultHandler<Pupil>?> = _deletePupil.asStateFlow()
+    private val _deletePupil = MutableStateFlow<ResultHandler<Any>?>(null)
+    val deletePupil: StateFlow<ResultHandler<Any>?> = _deletePupil.asStateFlow()
 
     fun loadPupils(page: Int = currentPage, reload: Boolean = false) {
 
@@ -136,7 +137,7 @@ class PupilViewModel(private val repository: PupilRepository) : ViewModel() {
                 _deletePupil.value = ResultHandler.Loading
                 val res = repository.deletePupilById(id)
                 res.collectLatest {
-                    _deletePupil.value = ResultHandler.Success(it)
+                    _deletePupil.value = ResultHandler.Success("Successfully deleted")
                     loadPupils(reload = true)
                 }
             } catch (e: Exception) {

@@ -37,6 +37,34 @@ fun PupilDetailScreen(
         }
     }
 
+    var showErrorSnackbar by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
+    
+    LaunchedEffect(deleteResult) {
+        if (deleteResult is ResultHandler.Error) {
+            errorMessage = (deleteResult as ResultHandler.Error).exception.message ?: "Unknown error occurred"
+            showErrorSnackbar = true
+        }
+    }
+    
+    if (showErrorSnackbar) {
+        Snackbar(
+            modifier = Modifier.padding(16.dp),
+            action = {
+                TextButton(onClick = { showErrorSnackbar = false }) {
+                    Text("Dismiss")
+                }
+            },
+            dismissAction = {
+                IconButton(onClick = { showErrorSnackbar = false }) {
+                    Text("×")
+                }
+            }
+        ) {
+            Text("Error: $errorMessage")
+        }
+    }
+
 
     if (showDeleteDialog) {
         AlertDialog(
@@ -134,7 +162,17 @@ fun PupilDetailScreen(
                                     enabled = deleteResult !is ResultHandler.Loading,
                                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                                 ) {
-                                    Text("Delete")
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text("Delete")
+                                        if (deleteResult is ResultHandler.Loading) {
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.size(16.dp),
+                                                color = MaterialTheme.colorScheme.onError,
+                                                strokeWidth = 2.dp
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
