@@ -17,9 +17,9 @@ class PupilViewModel(private val repository: PupilRepository) : ViewModel() {
     private var currentPage = 1
     private var isLastPage = false
 
-    init {
-        loadPupils()
-    }
+//    init {
+//        loadPupils()
+//    }
 
     private val _pupils = MutableStateFlow<ResultHandler<Pupils>>(ResultHandler.Loading)
     val pupils: StateFlow<ResultHandler<Pupils>> = _pupils.asStateFlow()
