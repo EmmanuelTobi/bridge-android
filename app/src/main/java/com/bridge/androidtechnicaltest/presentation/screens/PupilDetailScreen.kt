@@ -90,8 +90,7 @@ fun PupilDetailScreen(
                             Spacer(modifier = Modifier.height(16.dp))
                             Row {
                                 Button(
-                                    onClick = { 
-                                        viewModel.setEditPupil(it.data)
+                                    onClick = {
                                         onNavigateToEdit(it.data)
                                     }
                                 ) {
