@@ -36,8 +36,8 @@ class PupilViewModel(private val repository: PupilRepository) : ViewModel() {
     private val _updatePupil = MutableStateFlow<ResultHandler<Pupil>?>(null)
     val updatePupil: StateFlow<ResultHandler<Pupil>?> = _updatePupil.asStateFlow()
 
-    private val _deletePupil = MutableStateFlow<ResultHandler<Pupil>>(ResultHandler.Loading)
-    val deletePupil: StateFlow<ResultHandler<Pupil>> = _deletePupil.asStateFlow()
+    private val _deletePupil = MutableStateFlow<ResultHandler<Pupil>?>(null)
+    val deletePupil: StateFlow<ResultHandler<Pupil>?> = _deletePupil.asStateFlow()
 
     fun loadPupils(page: Int = currentPage, reload: Boolean = false) {
 
@@ -126,6 +126,21 @@ class PupilViewModel(private val repository: PupilRepository) : ViewModel() {
                 getPupilDetails(pupil.pupilId!!)
             } catch (e: Exception) {
                 _selectedPupil.value = ResultHandler.Error(e)
+            }
+        }
+    }
+
+    fun deletePupilById(id: Int) {
+        viewModelScope.launch {
+            try {
+                _deletePupil.value = ResultHandler.Loading
+                val res = repository.deletePupilById(id)
+                res.collectLatest {
+                    _deletePupil.value = ResultHandler.Success(it)
+                    loadPupils(reload = true)
+                }
+            } catch (e: Exception) {
+                _deletePupil.value = ResultHandler.Error(e)
             }
         }
     }

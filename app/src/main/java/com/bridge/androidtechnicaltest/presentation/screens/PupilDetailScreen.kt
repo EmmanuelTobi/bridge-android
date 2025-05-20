@@ -4,10 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -30,6 +27,41 @@ fun PupilDetailScreen(
     }
 
     val student by viewModel.selectedPupil.collectAsState()
+    val deleteResult by viewModel.deletePupil.collectAsState()
+    
+    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(deleteResult) {
+        if (deleteResult is ResultHandler.Success) {
+            onNavigateBack()
+        }
+    }
+
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Confirm Deletion") },
+            text = { Text("Are you sure you want to delete this student?") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showDeleteDialog = false
+                        viewModel.deletePupilById(studentId)
+                    }
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                OutlinedButton(
+                    onClick = { showDeleteDialog = false }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -98,7 +130,9 @@ fun PupilDetailScreen(
                                 }
                                 Spacer(modifier = Modifier.width(16.dp))
                                 Button(
-                                    onClick = { }
+                                    onClick = { showDeleteDialog = true },
+                                    enabled = deleteResult !is ResultHandler.Loading,
+                                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                                 ) {
                                     Text("Delete")
                                 }
