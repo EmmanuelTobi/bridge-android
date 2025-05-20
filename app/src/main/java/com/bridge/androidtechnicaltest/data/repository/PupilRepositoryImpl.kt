@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.retry
 import retrofit2.HttpException
 import java.io.IOException
@@ -22,34 +23,45 @@ class PupilRepositoryImpl(
 
     override suspend fun getPupils(page: Int): Flow<Pupils> {
         return flow {
+            try {
 
-            val res = apiService.getPupils(page)
-            emit(res)
+                val apiPupils = apiService.getPupils(page)
+                val localPupils = pupilDao.getAllPupils().first().filter { it.pupilId == null } ////load pupils from the room setup db
 
+                if (localPupils.isNotEmpty()) {
+                    val mergedItems = apiPupils.items.toMutableList()
+                    mergedItems.addAll(localPupils.map { it.toPupil() })
+                    
+                    emit(Pupils(
+                        itemCount = mergedItems.size,
+                        items = mergedItems,
+                        pageNumber = apiPupils.pageNumber,
+                        totalPages = apiPupils.totalPages
+                    ))
+                } else {
+                    emit(apiPupils)
+                }
+
+            } catch (throwable: Exception) {
+                Log.d(TAG, "getPupils from local after Error: ${throwable.message}")
+                try {
+                    val localPupils = pupilDao.getAllPupils().first()
+                    emit(Pupils(
+                        itemCount = localPupils.size,
+                        items = localPupils.map { it.toPupil() },
+                        pageNumber = page,
+                        totalPages = 1
+                    ))
+                } catch (e: Exception) {
+                    throw e
+                }
+            }
         }.retry(3) { cause ->
-
             Log.d(TAG, "getPupils Retrying: ${cause.message}")
             cause is IOException ||
                     (cause is HttpException && cause.code() != 201) ||
                     (cause is HttpException && cause.code() != 200)
-
         }.catch { throwable ->
-
-            Log.d(TAG, "getPupils from local after final Error: ${throwable.message}")
-            try {
-
-                val localPupils = pupilDao.getAllPupils().first()
-                emit(Pupils(
-                    itemCount = localPupils.size,
-                    items = localPupils.map { it.toPupil() },
-                    pageNumber = page,
-                    totalPages = 1
-                ))
-
-            } catch (e: Exception) {
-                throw e
-            }
-
             Log.d(TAG, "getPupils Error: ${throwable.message}")
             when (throwable) {
                 is HttpException -> {
@@ -97,7 +109,6 @@ class PupilRepositoryImpl(
 
                 }
             }
-
         }
     }
 
