@@ -11,6 +11,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.bridge.androidtechnicaltest.data.model.Pupil
 import com.bridge.androidtechnicaltest.presentation.viewmodel.PupilViewModel
+import com.bridge.androidtechnicaltest.utils.ResultHandler
 import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -19,6 +20,8 @@ fun CreatePupilScreen(
     onNavigateBack: () -> Unit,
     viewModel: PupilViewModel = koinViewModel()
 ) {
+
+    val creatingPupil by viewModel.createPupil.collectAsState()
 
     var name by remember { mutableStateOf("") }
     var country by remember { mutableStateOf("") }
@@ -56,21 +59,14 @@ fun CreatePupilScreen(
                 value = country,
                 onValueChange = { country = it },
                 label = { Text("Country") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = lng,
+                onValueChange = { lng = it },
+                label = { Text("Longtitude") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = lng,
-                onValueChange = { lng = it },
-                label = { Text("Longtitude") },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            OutlinedTextField(
-                value = lng,
-                onValueChange = { lng = it },
-                label = { Text("Longtitude") },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -78,7 +74,14 @@ fun CreatePupilScreen(
                 value = lat,
                 onValueChange = { lat = it },
                 label = { Text("Latitude") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            OutlinedTextField(
+                value = image,
+                onValueChange = { image = it },
+                label = { Text("Image") },
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(16.dp))
@@ -86,19 +89,38 @@ fun CreatePupilScreen(
                 onClick = {
                     val pupil = Pupil(
                         name = name,
-                        image = "",
-                        latitude = 0.0,
-                        longitude = 0.0,
-                        country = "",
+                        image = image,
+                        latitude = lat.toDoubleOrNull() ?: 0.0,
+                        longitude = lng.toDoubleOrNull() ?: 0.0,
+                        country = country,
                     )
                     viewModel.createPupil(pupil)
-                    onNavigateBack()
                 },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 enabled = name.isNotBlank() && country.isNotBlank() &&
-                         lat.isNotBlank() && lng.isNotBlank()
+                         lat.isNotBlank() && lng.isNotBlank() &&
+                         creatingPupil !is ResultHandler.Loading
             ) {
-                Text("Create Student")
+                when(creatingPupil) {
+                    is ResultHandler.Loading -> {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                    is ResultHandler.Success -> {
+                        Text("Success")
+                        LaunchedEffect(Unit) {
+                            onNavigateBack()
+                        }
+                    }
+                    is ResultHandler.Error -> {
+                        Text("Error")
+                    }
+                    null -> {
+                        Text("Create Student")
+                    }
+                }
             }
         }
     }

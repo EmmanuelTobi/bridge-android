@@ -30,8 +30,8 @@ class PupilViewModel(private val repository: PupilRepository) : ViewModel() {
     private val _editPupil = MutableStateFlow<Pupil?>(null)
     val editPupil: StateFlow<Pupil?> = _editPupil.asStateFlow()
 
-    private val _createPupil = MutableStateFlow<ResultHandler<Pupil>>(ResultHandler.Loading)
-    val createPupil: StateFlow<ResultHandler<Pupil>> = _createPupil.asStateFlow()
+    private val _createPupil = MutableStateFlow<ResultHandler<Pupil>?>(null)
+    val createPupil: StateFlow<ResultHandler<Pupil>?> = _createPupil.asStateFlow()
 
     private val _deletePupil = MutableStateFlow<ResultHandler<Pupil>>(ResultHandler.Loading)
     val deletePupil: StateFlow<ResultHandler<Pupil>> = _deletePupil.asStateFlow()
@@ -93,10 +93,15 @@ class PupilViewModel(private val repository: PupilRepository) : ViewModel() {
     fun createPupil(pupil: Pupil) {
         viewModelScope.launch {
             try {
-                repository.createPupil(pupil)
+                _createPupil.value = ResultHandler.Loading
+                val res = repository.createPupil(pupil)
+                res.collectLatest {
+                    _createPupil.value = ResultHandler.Success(it)
+                }
                 loadPupils()
             } catch (e: Exception) {
-                
+                println(e.message)
+                _createPupil.value = ResultHandler.Error(e)
             }
         }
     }
