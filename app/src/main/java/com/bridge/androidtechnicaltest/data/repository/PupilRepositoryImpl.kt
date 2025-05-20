@@ -23,39 +23,24 @@ class PupilRepositoryImpl(
 
     override suspend fun getPupils(page: Int): Flow<Pupils> {
         return flow {
-            try {
 
-                val apiPupils = apiService.getPupils(page)
-                val localPupils = pupilDao.getAllPupils().first().filter { it.pupilId == null } ////load pupils from the room setup db
+            val apiPupils = apiService.getPupils(page)
+            val localPupils = pupilDao.getAllPupils().first().filter { it.pupilId == null } ////load pupils from the room setup db
 
-                if (localPupils.isNotEmpty()) {
-                    val mergedItems = apiPupils.items.toMutableList()
-                    mergedItems.addAll(localPupils.map { it.toPupil() })
-                    
-                    emit(Pupils(
-                        itemCount = mergedItems.size,
-                        items = mergedItems,
-                        pageNumber = apiPupils.pageNumber,
-                        totalPages = apiPupils.totalPages
-                    ))
-                } else {
-                    emit(apiPupils)
-                }
+            if (localPupils.isNotEmpty()) {
+                val mergedItems = apiPupils.items.toMutableList()
+                mergedItems.addAll(localPupils.map { it.toPupil() })
 
-            } catch (throwable: Exception) {
-                Log.d(TAG, "getPupils from local after Error: ${throwable.message}")
-                try {
-                    val localPupils = pupilDao.getAllPupils().first()
-                    emit(Pupils(
-                        itemCount = localPupils.size,
-                        items = localPupils.map { it.toPupil() },
-                        pageNumber = page,
-                        totalPages = 1
-                    ))
-                } catch (e: Exception) {
-                    throw e
-                }
+                emit(Pupils(
+                    itemCount = mergedItems.size,
+                    items = mergedItems,
+                    pageNumber = apiPupils.pageNumber,
+                    totalPages = apiPupils.totalPages
+                ))
+            } else {
+                emit(apiPupils)
             }
+
         }.retry(3) { cause ->
             Log.d(TAG, "getPupils Retrying: ${cause.message}")
             cause is IOException ||
